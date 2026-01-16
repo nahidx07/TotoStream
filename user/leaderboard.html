@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">Leader<span>board</span></div>
+    </header>
+
+    <div id="leaderboardList" style="padding: 10px;">
+        <p>Loading rankings...</p>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">🏠<span>Home</span></a>
+        <a href="leaderboard.html" class="nav-item active">🏆<span>Rank</span></a>
+        <a href="profile.html" class="nav-item">👤<span>Profile</span></a>
+    </nav>
+
+    <script src="../firebase-config.js"></script>
+    <script>
+        async function loadLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            const snapshot = await db.collection('users')
+                .orderBy('points', 'desc')
+                .limit(20)
+                .get();
+            
+            list.innerHTML = '';
+            let rank = 1;
+
+            snapshot.forEach(doc => {
+                const user = doc.data();
+                list.innerHTML += `
+                    <div class="rank-item">
+                        <div class="rank-no">#${rank++}</div>
+                        <img src="${user.photo || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="rank-img">
+                        <div style="flex-grow:1">
+                            <div style="font-weight:bold">${user.name}</div>
+                            <div style="font-size:12px; color:#aaa">@${user.username}</div>
+                        </div>
+                        <div style="color:#ffd700; font-weight:bold">${user.points} pts</div>
+                    </div>
+                `;
+            });
+        }
+        loadLeaderboard();
+    </script>
+</body>
+</html>

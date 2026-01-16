@@ -1,81 +1,57 @@
 const tg = window.Telegram.WebApp;
-tg.expand(); // ফুল স্ক্রিন মোড
+tg.expand();
 
-const db = firebase.firestore();
-let currentUser = null;
+let userData = null;
 
-// Initialize User
 async function initUser() {
-    const userData = tg.initDataUnsafe.user;
-    if (!userData) {
-        alert("Please open from Telegram Bot");
-        return;
-    }
-
-    const userRef = db.collection('users').doc(userData.id.toString());
+    const tgUser = tg.initDataUnsafe.user || { id: 12345, first_name: "Local", last_name: "Test", photo_url: "" };
+    const userRef = db.collection('users').doc(tgUser.id.toString());
     const doc = await userRef.get();
 
     if (!doc.exists()) {
-        // New User & Referral Check
         const urlParams = new URLSearchParams(window.location.search);
-        const refBy = urlParams.get('startapp'); // Telegram referral param
+        const refBy = urlParams.get('startapp');
 
-        const newUser = {
-            userId: userData.id,
-            username: userData.username || 'Guest',
-            name: `${userData.first_name} ${userData.last_name || ''}`,
-            photo: userData.photo_url || '',
+        userData = {
+            userId: tgUser.id,
+            name: `${tgUser.first_name} ${tgUser.last_name || ''}`,
+            username: tgUser.username || "guest",
+            photo: tgUser.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png",
             points: 0,
-            referralCode: userData.id,
-            referredBy: refBy || null,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            referralCount: 0,
+            referredBy: refBy || null
         };
+        await userRef.set(userData);
 
-        await userRef.set(newUser);
-        
-        // Reward Referrer
         if (refBy) {
-            const refUserRef = db.collection('users').doc(refBy);
-            await refUserRef.update({
-                points: firebase.firestore.FieldValue.increment(1000)
+            await db.collection('users').doc(refBy).update({
+                points: firebase.firestore.FieldValue.increment(1000),
+                referralCount: firebase.firestore.FieldValue.increment(1)
             });
         }
-        currentUser = newUser;
     } else {
-        currentUser = doc.data();
+        userData = doc.data();
     }
-    
-    updateUI();
-    loadStreams();
+    document.getElementById('topPoints').innerText = `${userData.points} pts`;
 }
 
-function updateUI() {
-    document.getElementById('userPoints').innerText = `${currentUser.points} pts`;
-}
-
-async function loadStreams() {
+async function loadHomeStreams() {
+    const grid = document.getElementById('streamGrid');
     const snapshot = await db.collection('streams').where('status', '==', 'Live').get();
-    const container = document.getElementById('streamContainer');
-    container.innerHTML = '';
+    grid.innerHTML = '';
 
     snapshot.forEach(doc => {
-        const stream = doc.data();
-        container.innerHTML += `
-            <div class="stream-card" onclick="openPlayer('${doc.id}')">
-                <div class="thumbnail-container">
-                    <img src="${stream.thumbnail}" alt="thumb">
-                    <div class="live-badge">LIVE</div>
+        const s = doc.data();
+        grid.innerHTML += `
+            <div class="stream-card" onclick="location.href='player.html?id=${doc.id}'">
+                <div class="thumb-wrap">
+                    <img src="${s.thumbnail}">
+                    <div class="badge-live">LIVE</div>
                 </div>
-                <div style="padding: 12px;">
-                    <h3 style="margin:0; font-size:16px;">${stream.title}</h3>
+                <div class="stream-info">
+                    <h3 style="margin:0; font-size:16px;">${s.title}</h3>
                 </div>
             </div>
         `;
     });
 }
-
-function openPlayer(id) {
-    window.location.href = `player.html?id=${id}`;
-}
-
-initUser();

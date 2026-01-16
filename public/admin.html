@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #121212; color: #fff; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 20px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #2c2c2e; border: none; border-radius: 10px; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #CCF02F; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .list-item { background: #1e1e1e; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <h2>Admin Dashboard</h2>
+    <div class="card">
+        <h3>Add New Stream</h3>
+        <input type="text" id="t" placeholder="Stream Title">
+        <input type="text" id="p" placeholder="Thumbnail URL">
+        <input type="text" id="u" placeholder="Stream URL (m3u8/Embed)">
+        <button onclick="add()">Publish Live Now</button>
+    </div>
+
+    <h3>Active Streams</h3>
+    <div id="list"></div>
+
+    <script>
+        const firebaseConfig = { apiKey: "...", projectId: "...", appId: "..." }; // আপনার ডাটা দিন
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function add() {
+            const title = document.getElementById('t').value;
+            const thumb = document.getElementById('p').value;
+            const url = document.getElementById('u').value;
+            if(title && thumb && url) {
+                await db.collection('streams').add({ title, thumbnail: thumb, streamUrl: url, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                alert("Stream Published!"); location.reload();
+            }
+        }
+
+        async function load() {
+            const snap = await db.collection('streams').orderBy('createdAt', 'desc').get();
+            const div = document.getElementById('list');
+            snap.forEach(doc => {
+                div.innerHTML += `<div class="list-item"><span>${doc.data().title}</span><button onclick="del('${doc.id}')" style="width:auto; background:none; color:red; padding:0;">Delete</button></div>`;
+            });
+        }
+        async function del(id) { if(confirm("Delete?")) { await db.collection('streams').doc(id).delete(); location.reload(); } }
+        load();
+    </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const bot = new Telegraf("YOUR_BOT_TOKEN"); // আপনার বটের টোকেন এখানে দিন
+const bot = new Telegraf("8257435353:AAFuoWUyTOe6tJk7M1czdFZ1NkQJA1rZR70"); // আপনার বটের টোকেন এখানে দিন
 
 bot.start(async (ctx) => {
   const { id, first_name, last_name, username } = ctx.from;
@@ -54,7 +54,7 @@ bot.start(async (ctx) => {
     ctx.replyWithHTML(welcomeMsg, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "Watch Live Sports 🚀", web_app: { url: "https://your-vercel-link.vercel.app" } }] // আপনার ভার্সেল লিংক দিন
+          [{ text: "Watch Live Sports 🚀", web_app: { url: "https://totostream.vercel.app" } }] // আপনার ভার্সেল লিংক দিন
         ]
       }
     });

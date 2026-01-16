@@ -3,169 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Toto Stream - Premium</title>
+    <title>Toto Stream</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
     <style>
         :root { --primary: #CCF02F; --bg: #000; --card: #1C1C1E; --text: #FFF; --dim: #8E8E93; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding: 20px; padding-bottom: 100px; overflow-x: hidden; }
-        
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .user-greet span { color: var(--dim); font-size: 11px; font-weight: bold; letter-spacing: 1px; }
-        .user-greet h1 { margin: 2px 0; font-size: 22px; }
-        .points-badge { background: var(--card); padding: 8px 15px; border-radius: 20px; color: var(--primary); font-weight: bold; display: flex; align-items: center; gap: 5px; }
-        .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #333; }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; overflow: hidden; }
 
-        /* Search */
-        .search-box { background: var(--card); padding: 12px; border-radius: 15px; display: flex; align-items: center; gap: 10px; margin-bottom: 25px; }
-        .search-box input { background: transparent; border: none; color: white; width: 100%; outline: none; }
+        /* Loader */
+        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #loader img { width: 100px; height: 100px; border-radius: 25px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.6; } }
 
-        /* Featured Card */
-        .banner { position: relative; height: 230px; border-radius: 30px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; }
+        /* Main UI */
+        .app-content { height: 100vh; display: flex; flex-direction: column; opacity: 0; transition: 0.8s; }
+        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 100; }
+        .logo-header { height: 35px; border-radius: 5px; }
+
+        .section { flex: 1; overflow-y: auto; padding: 10px 20px 120px; display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Components */
+        .points-badge { background: var(--card); padding: 8px 15px; border-radius: 20px; color: var(--primary); font-weight: bold; font-size: 14px; }
+        .banner { width: 100%; height: 210px; border-radius: 30px; overflow: hidden; position: relative; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .banner img { width: 100%; height: 100%; object-fit: cover; }
-        .banner-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); display: flex; justify-content: space-between; align-items: flex-end; }
-        .watch-btn { background: var(--primary); color: #000; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; font-size: 13px; }
+        .banner-overlay { position: absolute; inset: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; }
 
-        /* Stream Grid */
-        .section-title { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px; color: var(--dim); letter-spacing: 1px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: var(--card); border-radius: 25px; overflow: hidden; transition: 0.3s; }
-        .card img { width: 100%; height: 120px; object-fit: cover; }
-        .card-body { padding: 12px; }
-        .card-body h4 { margin: 5px 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--dim); font-weight: bold; margin-top: 8px; }
+        /* Profile & Edit */
+        .edit-input { width: 100%; background: var(--card); border: 1px solid #333; padding: 14px; border-radius: 15px; color: #fff; margin-bottom: 15px; }
+        .btn-premium { background: var(--primary); color: #000; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-        /* Bottom Nav */
-        .nav { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(28,28,30,0.9); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 15px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); }
-        .nav-item { text-decoration: none; color: #666; font-size: 10px; text-align: center; font-weight: bold; }
-        .nav-item.active { color: #fff; }
-        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+        /* Rank List */
+        .rank-card { background: var(--card); padding: 12px; border-radius: 18px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
+        .rank-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
 
-        /* Player View */
-        #player-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; }
-        .close-player { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 30px; cursor: pointer; z-index: 1001; }
+        /* Bottom Navigation */
+        nav { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(28,28,30,0.9); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 15px 5px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { color: #666; text-decoration: none; font-size: 10px; text-align: center; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item svg { width: 24px; height: 24px; display: block; margin: 0 auto 5px; fill: currentColor; }
+
+        /* Video Player Overlay */
+        #videoPlayer { position: fixed; inset: 0; background: #000; z-index: 2000; display: none; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <div class="header">
-        <div class="user-greet">
-            <span id="dayPart">GOOD MORNING</span>
-            <h1 id="uName">Loading...</h1>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
+    <div id="loader">
+        <img id="loadLogo" src="https://cdn-icons-png.flaticon.com/512/889/889102.png">
+        <div style="color: var(--primary); font-weight: bold; letter-spacing: 2px;">TOTO STREAM</div>
+    </div>
+
+    <div class="app-content" id="app">
+        <header>
+            <img id="appLogo" src="" class="logo-header">
             <div class="points-badge">🔥 <span id="uPoints">0</span></div>
-            <img id="uAvatar" src="" class="avatar">
+        </header>
+
+        <!-- Home -->
+        <div id="home" class="section active">
+            <div id="topBanner" class="banner"></div>
+            <div id="streamGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
         </div>
-    </div>
 
-    <!-- Search -->
-    <div class="search-box">
-        <span>🔍</span>
-        <input type="text" placeholder="Search live sports...">
-    </div>
+        <!-- Leaderboard -->
+        <div id="leaderboard" class="section">
+            <h2 style="margin: 0 0 20px;">Top 20 Legends 🏆</h2>
+            <div id="rankList"></div>
+        </div>
 
-    <!-- Latest Live Banner -->
-    <div id="banner" class="banner">
-        <img id="bImg" src="">
-        <div class="banner-overlay">
-            <div>
-                <p style="color: var(--primary); font-size: 10px; font-weight: bold; margin: 0;">LATEST STREAM</p>
-                <h2 id="bTitle" style="margin: 5px 0 0 0;">Stream Title</h2>
+        <!-- Referral -->
+        <div id="referral" class="section">
+            <div style="background: var(--card); padding: 30px; border-radius: 30px; text-align: center;">
+                <div style="font-size: 50px;">🎁</div>
+                <h3>Referral Program</h3>
+                <p style="color: var(--dim)">Invite your friends and earn <b style="color:var(--primary)">500 Points</b> instantly!</p>
+                <div id="refLink" style="background:#000; padding:15px; border-radius:15px; font-size:11px; margin:20px 0; color:var(--primary)">Loading link...</div>
+                <button class="btn-premium" onclick="copyRef()">Copy Invite Link</button>
             </div>
-            <button class="watch-btn" id="bBtn">Watch Now</button>
         </div>
+
+        <!-- Profile -->
+        <div id="profile" class="section">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img id="pAvatar" src="" style="width:100px; height:100px; border-radius:50%; border:4px solid var(--primary)">
+                <h2 id="pName" style="margin:10px 0 5px;">User Name</h2>
+                <p id="pId" style="color:var(--dim); margin:0;">ID: ---</p>
+            </div>
+            <input type="text" id="editName" class="edit-input" placeholder="Full Name">
+            <input type="email" id="editEmail" class="edit-input" placeholder="Email Address">
+            <input type="tel" id="editPhone" class="edit-input" placeholder="Phone Number">
+            <button class="btn-premium" onclick="saveProfile()">Update Profile</button>
+        </div>
+
+        <nav>
+            <a href="#" class="nav-item active" onclick="showSec('home', this)">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
+            </a>
+            <a href="#" class="nav-item" onclick="showSec('leaderboard', this)">
+                <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 003.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z"/></svg>Rank
+            </a>
+            <a href="#" class="nav-item" onclick="showSec('referral', this)">
+                <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.5 2.5 0 00-5 0c0 .35.07.69.18 1H11c.11-.31.18-.65.18-1a2.5 2.5 0 00-5 0c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/></svg>Refer
+            </a>
+            <a href="#" class="nav-item" onclick="showSec('profile', this)">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profile
+            </a>
+        </nav>
     </div>
 
-    <!-- Grid -->
-    <div class="section-title"><span>FOR YOU</span><span style="color: var(--primary)">See all</span></div>
-    <div id="streamGrid" class="grid"></div>
-
-    <!-- Player Overlay -->
-    <div id="player-view">
-        <span class="close-player" onclick="closePlayer()">×</span>
-        <iframe id="videoFrame" src="" width="100%" height="40%" frameborder="0" style="margin-top: 20%;" allowfullscreen></iframe>
-        <div style="padding: 20px;">
-            <h2 id="pTitle">Stream Title</h2>
-            <p style="color: var(--primary)">LIVE • Earning 10 pts/min</p>
+    <!-- Video Player Overlay -->
+    <div id="videoPlayer">
+        <div onclick="closePlayer()" style="padding:20px; color:white; font-size:30px; font-weight:bold; cursor:pointer;">× Close</div>
+        <iframe id="vFrame" src="" width="100%" height="45%" frameborder="0" style="margin-top:20%" allowfullscreen></iframe>
+        <div style="padding:20px;">
+            <h2 id="vTitle" style="color:white; margin:0;">Title</h2>
+            <p style="color:var(--primary); font-weight:bold;">● LIVE • Watching & Earning...</p>
         </div>
     </div>
-
-    <!-- Navigation -->
-    <nav class="nav">
-        <a href="#" class="nav-item active">🏠<br>Home</a>
-        <a href="#" class="nav-item">🏆<br>Rank</a>
-        <a href="#" class="nav-item">👤<br>Profile</a>
-    </nav>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyCn72TD-I1yI6-7oCCGlx1Mudh_ZlT7138", projectId: "totostream", appId: "1:22142190592:web:e937438ca67f37cbbcc4e5" }; // আপনার ডাটা দিন
+        const firebaseConfig = {
+            apiKey: "AIzaSyCn72TD-I1yI6-7oCCGlx1Mudh_ZlT7138",
+            authDomain: "totostream.firebaseapp.com",
+            projectId: "totostream",
+            appId: "1:22142190592:web:e937438ca67f37cbbcc4e5"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const tg = window.Telegram.WebApp;
         tg.expand();
 
         async function init() {
-            const user = tg.initDataUnsafe.user || { id: 12345, first_name: "Guest" };
-            document.getElementById('uName').innerText = user.first_name.toUpperCase();
-            
-            // ডাটাবেস থেকে ইউজার চেক
-            const userRef = db.collection('users').doc(user.id.toString());
-            const doc = await userRef.get();
-            if(doc.exists) {
-                document.getElementById('uPoints').innerText = doc.data().points;
-                document.getElementById('uAvatar').src = doc.data().photo || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            // App Settings
+            const settings = await db.collection('settings').doc('app').get();
+            if(settings.exists) {
+                document.getElementById('loadLogo').src = settings.data().logo;
+                document.getElementById('appLogo').src = settings.data().logo;
             }
+
+            const user = tg.initDataUnsafe.user || { id: 12345, first_name: "Admin" };
+            const uid = user.id.toString();
+
+            // Load User
+            const uDoc = await db.collection('users').doc(uid).get();
+            if(uDoc.exists) {
+                const d = uDoc.data();
+                document.getElementById('uPoints').innerText = d.points;
+                document.getElementById('pAvatar').src = d.photo;
+                document.getElementById('pName').innerText = d.name;
+                document.getElementById('pId').innerText = "ID: " + uid;
+                document.getElementById('editName').value = d.name;
+                document.getElementById('editEmail').value = d.email || "";
+                document.getElementById('editPhone').value = d.phone || "";
+                document.getElementById('refLink').innerText = `https://t.me/YourBotName?startapp=${uid}`;
+            }
+
             loadStreams();
+            loadRanks();
+
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app').style.opacity = '1';
+            }, 2500);
+        }
+
+        function showSec(id, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
 
         async function loadStreams() {
             const snap = await db.collection('streams').orderBy('createdAt', 'desc').get();
             const grid = document.getElementById('streamGrid');
-            let count = 0;
-            grid.innerHTML = '';
-
+            grid.innerHTML = ''; let count = 0;
             snap.forEach(doc => {
                 const s = doc.data();
                 if(count === 0) {
-                    document.getElementById('banner').style.display = 'block';
-                    document.getElementById('bImg').src = s.thumbnail;
-                    document.getElementById('bTitle').innerText = s.title;
-                    document.getElementById('bBtn').onclick = () => openPlayer(s.streamUrl, s.title);
-                } else {
-                    grid.innerHTML += `
-                        <div class="card" onclick="openPlayer('${s.streamUrl}', '${s.title}')">
-                            <img src="${s.thumbnail}">
-                            <div class="card-body">
-                                <h4>${s.title}</h4>
-                                <div class="card-meta"><span>⭐ 5.0</span><span>FREE</span></div>
-                            </div>
+                    document.getElementById('topBanner').innerHTML = `
+                        <img src="${s.thumbnail}" onclick="playVideo('${s.streamUrl}', '${s.title}')">
+                        <div class="banner-overlay">
+                            <span style="color:var(--primary); font-size:10px; font-weight:bold;">FEATURED LIVE</span>
+                            <h2 style="margin:5px 0;">${s.title}</h2>
                         </div>`;
+                } else {
+                    grid.innerHTML += `<div class="rank-card" style="display:block; padding:0; overflow:hidden;" onclick="playVideo('${s.streamUrl}', '${s.title}')">
+                        <img src="${s.thumbnail}" style="width:100%; height:110px; object-fit:cover;">
+                        <div style="padding:10px; font-size:13px; font-weight:bold;">${s.title}</div>
+                    </div>`;
                 }
                 count++;
             });
         }
 
-        let watchInterval;
-        function openPlayer(url, title) {
-            document.getElementById('player-view').style.display = 'block';
-            document.getElementById('videoFrame').src = url;
-            document.getElementById('pTitle').innerText = title;
-            
-            // পয়েন্ট আর্নিং শুরু
-            watchInterval = setInterval(async () => {
+        async function loadRanks() {
+            const snap = await db.collection('users').orderBy('points', 'desc').limit(20).get();
+            const list = document.getElementById('rankList');
+            list.innerHTML = ''; let i = 1;
+            snap.forEach(doc => {
+                const u = doc.data();
+                list.innerHTML += `<div class="rank-card">
+                    <b style="width:25px; color:var(--primary)">${i++}</b>
+                    <img src="${u.photo}" class="rank-img">
+                    <div style="flex:1"><b>${u.name}</b><br><small style="color:var(--dim)">@${u.username}</small></div>
+                    <b style="color:var(--primary)">${u.points}</b>
+                </div>`;
+            });
+        }
+
+        async function saveProfile() {
+            const uid = tg.initDataUnsafe.user.id.toString();
+            await db.collection('users').doc(uid).update({
+                name: document.getElementById('editName').value,
+                email: document.getElementById('editEmail').value,
+                phone: document.getElementById('editPhone').value
+            });
+            tg.showAlert("Profile updated successfully! ✨");
+        }
+
+        let pInt;
+        function playVideo(url, title) {
+            document.getElementById('videoPlayer').style.display = 'block';
+            document.getElementById('vFrame').src = url;
+            document.getElementById('vTitle').innerText = title;
+            pInt = setInterval(async () => {
                 const uid = tg.initDataUnsafe.user.id.toString();
                 await db.collection('users').doc(uid).update({ points: firebase.firestore.FieldValue.increment(10) });
             }, 60000);
         }
 
         function closePlayer() {
-            document.getElementById('player-view').style.display = 'none';
-            document.getElementById('videoFrame').src = '';
-            clearInterval(watchInterval);
+            document.getElementById('videoPlayer').style.display = 'none';
+            document.getElementById('vFrame').src = '';
+            clearInterval(pInt);
+        }
+
+        function copyRef() {
+            navigator.clipboard.writeText(document.getElementById('refLink').innerText);
+            tg.showAlert("Invite link copied! Now share and earn points. 🎁");
         }
 
         init();

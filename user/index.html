@@ -2,40 +2,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Toto Stream</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="style.css">
-    <!-- Firebase SDKs -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <header class="header">
         <div class="logo">Toto<span>Stream</span></div>
-        <div class="points-display" id="topPoints">0 pts</div>
+        <div class="points-badge" id="topPoints">0 pts</div>
     </header>
 
-    <main class="content">
-        <div class="section-title">Live Now</div>
-        <div id="streamGrid" class="stream-grid">
-            <!-- Stream cards load here -->
-        </div>
-    </main>
+    <div id="streamGrid" class="stream-grid"></div>
 
     <nav class="bottom-nav">
-        <a href="index.html" class="nav-item active">🏠<span>Home</span></a>
-        <a href="leaderboard.html" class="nav-item">🏆<span>Rank</span></a>
-        <a href="profile.html" class="nav-item">👤<span>Profile</span></a>
+        <a href="index.html" class="active">🏠<span>Home</span></a>
+        <a href="leaderboard.html">🏆<span>Rank</span></a>
+        <a href="profile.html">👤<span>Profile</span></a>
     </nav>
 
-    <script src="../firebase-config.js"></script>
-    <script src="app.js"></script>
     <script>
-        window.onload = () => {
-            initUser();
-            loadHomeStreams();
+        // ফায়ারবেস কনফিগারেশন এখানে বসান
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            appId: "YOUR_APP_ID"
         };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const tg = window.Telegram.WebApp;
+
+        async function init() {
+            const user = tg.initDataUnsafe.user || { id: 1234, first_name: "Test" };
+            const userRef = db.collection('users').doc(user.id.toString());
+            const doc = await userRef.get();
+            
+            if(!doc.exists) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const refBy = urlParams.get('startapp');
+                await userRef.set({
+                    userId: user.id, name: user.first_name, username: user.username || "guest",
+                    points: 0, referralCount: 0, photo: user.photo_url || ""
+                });
+                if(refBy) {
+                    await db.collection('users').doc(refBy).update({
+                        points: firebase.firestore.FieldValue.increment(1000),
+                        referralCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                }
+            }
+            document.getElementById('topPoints').innerText = (doc.data()?.points || 0) + " pts";
+            loadStreams();
+        }
+
+        async function loadStreams() {
+            const grid = document.getElementById('streamGrid');
+            const snap = await db.collection('streams').get();
+            grid.innerHTML = '';
+            snap.forEach(doc => {
+                const s = doc.data();
+                grid.innerHTML += `
+                    <div class="stream-card" onclick="location.href='player.html?id=${doc.id}'">
+                        <div class="thumb-wrap"><img src="${s.thumbnail}"><div class="badge-live">LIVE</div></div>
+                        <div class="stream-info"><h3>${s.title}</h3></div>
+                    </div>`;
+            });
+        }
+        init();
     </script>
 </body>
 </html>

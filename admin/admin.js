@@ -1,22 +1,26 @@
-const ADMIN_IDS = [12345678, 98765432]; // আপনার নিজের টেলিগ্রাম আইডি দিন
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
+</head>
+<body style="padding: 20px; background: #f4f4f4; color: #333;">
+    <h2>Toto Admin</h2>
+    
+    <div class="admin-form" style="background: white; padding: 15px; border-radius: 10px;">
+        <h4>Add New Live</h4>
+        <input type="text" id="sTitle" placeholder="Match Title">
+        <input type="text" id="sThumb" placeholder="Thumbnail Image URL">
+        <input type="text" id="sUrl" placeholder="Stream URL (m3u8/Embed)">
+        <button onclick="addStream()" style="width: 100%; padding: 10px; background: red; color: white; border: none; border-radius: 5px; margin-top: 10px;">Publish Live</button>
+    </div>
 
-function checkAdmin() {
-    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-    if (!ADMIN_IDS.includes(tgUser.id)) {
-        document.body.innerHTML = "<h1>Access Denied!</h1>";
-        return;
-    }
-    loadAdminDashboard();
-}
+    <h3>Active Streams</h3>
+    <div id="adminList"></div>
 
-// এডমিন ড্যাশবোর্ডে স্ট্রিম অ্যাড করার ফাংশন
-async function addStream(title, thumb, url) {
-    await db.collection('streams').add({
-        title,
-        thumbnail: thumb,
-        streamUrl: url,
-        status: 'Live',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    alert("Stream Added Successfully!");
-}
+    <script src="../firebase-config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

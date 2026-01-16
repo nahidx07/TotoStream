@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Toto Stream</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">Toto<span>Stream</span></div>
+        <div class="user-points" id="userPoints">0 pts</div>
+    </header>
+
+    <!-- Categories (Optional but looks premium) -->
+    <div class="chips-container">
+        <div class="chip active">All</div>
+        <div class="chip">Football</div>
+        <div class="chip">Cricket</div>
+    </div>
+
+    <!-- Stream Grid -->
+    <main class="stream-grid" id="streamContainer">
+        <!-- Skeleton Loading or Empty State -->
+        <p>Loading live streams...</p>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active">🏠<span>Home</span></a>
+        <a href="leaderboard.html" class="nav-item">🏆<span>Rank</span></a>
+        <a href="profile.html" class="nav-item">👤<span>Profile</span></a>
+    </nav>
+
+    <script src="../firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

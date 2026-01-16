@@ -2,24 +2,34 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toto Admin</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK (অবশ্যই এই তিনটি সিরিয়াল মেনে দিতে হবে) -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
 </head>
-<body style="padding: 20px; background: #f4f4f4; color: #333;">
-    <h2>Toto Admin</h2>
-    
-    <div class="admin-form" style="background: white; padding: 15px; border-radius: 10px;">
-        <h4>Add New Live</h4>
-        <input type="text" id="sTitle" placeholder="Match Title">
-        <input type="text" id="sThumb" placeholder="Thumbnail Image URL">
-        <input type="text" id="sUrl" placeholder="Stream URL (m3u8/Embed)">
-        <button onclick="addStream()" style="width: 100%; padding: 10px; background: red; color: white; border: none; border-radius: 5px; margin-top: 10px;">Publish Live</button>
+<body style="padding: 20px; background: #f0f2f5; font-family: sans-serif;">
+
+    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h2 style="margin-bottom: 20px;">Add New Stream</h2>
+        
+        <label>Stream Title</label>
+        <input type="text" id="sTitle" placeholder="Match Name" style="width:100%; padding:10px; margin: 8px 0; border:1px solid #ddd; border-radius:5px;">
+        
+        <label>Thumbnail Image URL</label>
+        <input type="text" id="sThumb" placeholder="https://example.com/image.jpg" style="width:100%; padding:10px; margin: 8px 0; border:1px solid #ddd; border-radius:5px;">
+        
+        <label>Stream URL (m3u8/Embed)</label>
+        <input type="text" id="sUrl" placeholder="https://server.com/live.m3u8" style="width:100%; padding:10px; margin: 8px 0; border:1px solid #ddd; border-radius:5px;">
+        
+        <button id="addBtn" onclick="addStream()" style="width:100%; padding:12px; background: #ff0000; color:white; border:none; border-radius:8px; font-weight:bold; margin-top:15px;">Publish Now</button>
     </div>
 
-    <h3>Active Streams</h3>
+    <hr style="margin: 30px 0; border: 0.5px solid #ccc;">
+    <h3>Active Streams List</h3>
     <div id="adminList"></div>
 
+    <!-- Firebase Config এবং Admin Logic -->
     <script src="../firebase-config.js"></script>
     <script src="admin.js"></script>
 </body>

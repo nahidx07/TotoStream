@@ -1,0 +1,13 @@
+// player.js এর লজিক
+let watchSeconds = 0;
+setInterval(() => {
+    // যদি ভিডিও প্লে থাকে (HTML5 Video বা Iframe চেক)
+    watchSeconds++;
+    
+    if (watchSeconds % 60 === 0) { // প্রতি ১ মিনিটে ১০ পয়েন্ট
+        db.collection('users').doc(currentUser.userId.toString()).update({
+            points: firebase.firestore.FieldValue.increment(10)
+        });
+        console.log("10 Points Added for watching!");
+    }
+}, 1000);

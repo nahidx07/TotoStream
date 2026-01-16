@@ -1,26 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
-</head>
-<body style="padding: 20px; background: #f4f4f4; color: #333;">
-    <h2>Toto Admin</h2>
-    
-    <div class="admin-form" style="background: white; padding: 15px; border-radius: 10px;">
-        <h4>Add New Live</h4>
-        <input type="text" id="sTitle" placeholder="Match Title">
-        <input type="text" id="sThumb" placeholder="Thumbnail Image URL">
-        <input type="text" id="sUrl" placeholder="Stream URL (m3u8/Embed)">
-        <button onclick="addStream()" style="width: 100%; padding: 10px; background: red; color: white; border: none; border-radius: 5px; margin-top: 10px;">Publish Live</button>
-    </div>
+async function addStream() {
+    const title = document.getElementById('sTitle').value;
+    const thumb = document.getElementById('sThumb').value;
+    const url = document.getElementById('sUrl').value;
 
-    <h3>Active Streams</h3>
-    <div id="adminList"></div>
+    if(title && thumb && url) {
+        await db.collection('streams').add({
+            title, thumbnail: thumb, streamUrl: url, status: 'Live', createdAt: new Date()
+        });
+        alert("Published!");
+        location.reload();
+    }
+}
 
-    <script src="../firebase-config.js"></script>
-    <script src="admin.js"></script>
-</body>
-</html>
+async function loadAdminStreams() {
+    const list = document.getElementById('adminList');
+    const snapshot = await db.collection('streams').get();
+    list.innerHTML = '';
+    snapshot.forEach(doc => {
+        const s = doc.data();
+        list.innerHTML += `
+            <div style="background:white; margin:10px 0; padding:10px; border-radius:5px; display:flex; justify-content:space-between;">
+                <span>${s.title}</span>
+                <button onclick="deleteStream('${doc.id}')" style="color:red; border:none; background:none;">Delete</button>
+            </div>
+        `;
+    });
+}
+loadAdminStreams();
+
+async function deleteStream(id) {
+    if(confirm("Are you sure?")) {
+        await db.collection('streams').doc(id).delete();
+        location.reload();
+    }
+}

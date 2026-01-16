@@ -2,35 +2,29 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toto Admin</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Firebase SDK (অবশ্যই এই তিনটি সিরিয়াল মেনে দিতে হবে) -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #eee; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: red; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        .list-item { background: white; padding: 10px; margin-top: 10px; border-radius: 5px; display: flex; justify-content: space-between; }
+    </style>
 </head>
-<body style="padding: 20px; background: #f0f2f5; font-family: sans-serif;">
-
-    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h2 style="margin-bottom: 20px;">Add New Stream</h2>
-        
-        <label>Stream Title</label>
-        <input type="text" id="sTitle" placeholder="Match Name" style="width:100%; padding:10px; margin: 8px 0; border:1px solid #ddd; border-radius:5px;">
-        
-        <label>Thumbnail Image URL</label>
-        <input type="text" id="sThumb" placeholder="https://example.com/image.jpg" style="width:100%; padding:10px; margin: 8px 0; border:1px solid #ddd; border-radius:5px;">
-        
-        <label>Stream URL (m3u8/Embed)</label>
-        <input type="text" id="sUrl" placeholder="https://server.com/live.m3u8" style="width:100%; padding:10px; margin: 8px 0; border:1px solid #ddd; border-radius:5px;">
-        
-        <button id="addBtn" onclick="addStream()" style="width:100%; padding:12px; background: #ff0000; color:white; border:none; border-radius:8px; font-weight:bold; margin-top:15px;">Publish Now</button>
+<body>
+    <h2>Toto Stream Admin</h2>
+    <div style="background: white; padding: 15px; border-radius: 10px;">
+        <input type="text" id="t" placeholder="Stream Title">
+        <input type="text" id="p" placeholder="Thumbnail URL">
+        <input type="text" id="u" placeholder="Stream URL (m3u8/Embed)">
+        <button onclick="add()">Add Live Stream</button>
     </div>
 
-    <hr style="margin: 30px 0; border: 0.5px solid #ccc;">
-    <h3>Active Streams List</h3>
-    <div id="adminList"></div>
+    <h3>Active Streams</h3>
+    <div id="list"></div>
 
-    <!-- Firebase Config এবং Admin Logic -->
-    const firebaseConfig = {
+    <script>
+        const firebaseConfig = {
     apiKey: "AIzaSyCn72TD-I1yI6-7oCCGlx1Mudh_ZlT7138",
     authDomain: "totostream.firebaseapp.com",
     projectId: "totostream",
@@ -38,10 +32,41 @@
     messagingSenderId: "22142190592",
     appId: "1:22142190592:web:e937438ca67f37cbbcc4e5"
 };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-    <script src="admin.js"></script>
+        async function add() {
+            const title = document.getElementById('t').value;
+            const thumb = document.getElementById('p').value;
+            const url = document.getElementById('u').value;
+            
+            if(title && thumb && url) {
+                await db.collection('streams').add({
+                    title, thumbnail: thumb, streamUrl: url, status: 'Live', createdAt: new Date()
+                });
+                alert("Added!");
+                location.reload();
+            }
+        }
+
+        async function load() {
+            const snap = await db.collection('streams').get();
+            const div = document.getElementById('list');
+            snap.forEach(doc => {
+                div.innerHTML += `
+                <div class="list-item">
+                    <span>${doc.data().title}</span>
+                    <button onclick="del('${doc.id}')" style="width:auto; padding:5px; background:none; color:red;">Delete</button>
+                </div>`;
+            });
+        }
+        async function del(id) {
+            if(confirm("Delete?")) {
+                await db.collection('streams').doc(id).delete();
+                location.reload();
+            }
+        }
+        load();
+    </script>
 </body>
 </html>

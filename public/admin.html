@@ -2,89 +2,103 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toto Admin Console</title>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --primary: #CCF02F; --bg: #121212; --card: #1e1e1e; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); color: #fff; overflow-x: hidden; }
+        :root { --primary: #CCF02F; --bg: #0A0A0A; --card: #151515; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #fff; overflow-x: hidden; }
         
-        /* Sidebar Menu */
-        #sidebar { position: fixed; left: -280px; top: 0; bottom: 0; width: 280px; background: #000; transition: 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1); z-index: 1000; padding: 30px 20px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+        /* Sidebar */
+        #sidebar { position: fixed; left: -280px; top: 0; bottom: 0; width: 280px; background: #000; transition: 0.4s; z-index: 1000; padding: 40px 20px; border-right: 1px solid #222; }
         #sidebar.active { left: 0; }
-        .menu-item { padding: 18px; border-radius: 12px; margin-bottom: 5px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: #aaa; transition: 0.3s; }
+        .menu-item { padding: 18px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: #888; transition: 0.3s; font-weight: 500; }
         .menu-item:hover, .menu-item.active { background: var(--card); color: var(--primary); }
 
-        /* Content Area */
+        /* Main Content */
         .content { padding: 25px; transition: 0.4s; }
-        header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
-        .dot-menu { font-size: 28px; cursor: pointer; background: var(--card); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+        header { display: flex; align-items: center; gap: 20px; margin-bottom: 35px; }
+        .dot-btn { font-size: 28px; cursor: pointer; background: var(--card); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 15px; border: 1px solid #333; }
 
-        input { width: 100%; padding: 15px; margin: 10px 0; background: #2c2c2e; border: 1px solid #333; border-radius: 12px; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: var(--primary); border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 15px; cursor: pointer; }
-        
-        .panel { display: none; }
-        .panel.active { display: block; animation: slideUp 0.4s; }
+        .panel { display: none; animation: slideUp 0.4s ease; }
+        .panel.active { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stat-box { background: var(--card); padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #333; }
-        .user-row { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        /* Forms & Cards */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .stat-box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #222; text-align: center; }
+        .stat-box h1 { font-size: 32px; margin: 10px 0 0; color: var(--primary); }
+        
+        .admin-card { background: var(--card); padding: 25px; border-radius: 25px; border: 1px solid #222; margin-bottom: 25px; }
+        input { width: 100%; padding: 15px; margin: 10px 0 20px; background: #222; border: 1px solid #333; border-radius: 12px; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 16px; background: var(--primary); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; }
+        
+        .list-row { background: var(--card); padding: 15px 20px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
     </style>
 </head>
 <body>
 
+    <!-- Overlay for Sidebar -->
+    <div id="overlay" onclick="toggleMenu()" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:900; display:none;"></div>
+
     <div id="sidebar">
-        <h2 style="color: var(--primary); margin-bottom: 40px; padding-left: 15px;">Toto Console</h2>
+        <h2 style="color: var(--primary); margin-bottom: 45px; padding-left: 15px;">Toto Admin</h2>
         <div class="menu-item active" onclick="showPanel('dashboard')">📊 Dashboard</div>
-        <div class="menu-item" onclick="showPanel('streams')">📺 Live Streams</div>
-        <div class="menu-item" onclick="showPanel('members')">👥 Members</div>
+        <div class="menu-item" onclick="showPanel('members')">👥 Members List</div>
+        <div class="menu-item" onclick="showPanel('addStream')">📺 Add Live Stream</div>
         <div class="menu-item" onclick="showPanel('settings')">⚙️ App Settings</div>
     </div>
 
-    <div class="content" id="mainContent">
+    <div class="content">
         <header>
-            <div class="dot-menu" onclick="toggleMenu()">⋮</div>
-            <h2 id="pTitle">Dashboard</h2>
+            <div class="dot-btn" onclick="toggleMenu()">⋮</div>
+            <h2 id="panelTitle">Dashboard</h2>
         </header>
 
-        <!-- Dashboard -->
+        <!-- Panel: Dashboard -->
         <div id="dashboard" class="panel active">
             <div class="stat-grid">
-                <div class="stat-box"><span style="color:var(--dim); font-size:12px;">TOTAL USERS</span><h1 id="countUsers">0</h1></div>
-                <div class="stat-box"><span style="color:var(--dim); font-size:12px;">LIVE NOW</span><h1 id="countLive">0</h1></div>
+                <div class="stat-box"><span>TOTAL USERS</span><h1 id="countUsers">0</h1></div>
+                <div class="stat-box"><span>TOTAL STREAMS</span><h1 id="countStreams">0</h1></div>
             </div>
+            <h3>Quick Actions</h3>
+            <button onclick="showPanel('addStream')" style="background:#222; color:#fff; border:1px solid #444;">+ Add New Stream</button>
         </div>
 
-        <!-- Live Streams -->
-        <div id="streams" class="panel">
-            <div style="background:var(--card); padding:20px; border-radius:20px; margin-bottom:25px;">
-                <h3>Add New Stream</h3>
-                <input type="text" id="sTitle" placeholder="Stream Title">
-                <input type="text" id="sThumb" placeholder="Thumbnail URL">
-                <input type="text" id="sUrl" placeholder="Stream URL (m3u8/Embed)">
-                <button onclick="saveStream()">Publish Stream</button>
+        <!-- Panel: Add Stream -->
+        <div id="addStream" class="panel">
+            <div class="admin-card">
+                <label>Stream Title</label>
+                <input type="text" id="sTitle" placeholder="e.g. Argentina vs Brazil Live">
+                <label>Thumbnail Image URL</label>
+                <input type="text" id="sThumb" placeholder="https://image-link.jpg">
+                <label>Stream/Embed Link</label>
+                <input type="text" id="sUrl" placeholder="https://server.com/live.m3u8">
+                <button onclick="saveStream()">Publish Stream Now</button>
             </div>
+            <h3>Recent Streams</h3>
             <div id="streamList"></div>
         </div>
 
-        <!-- Members -->
+        <!-- Panel: Members -->
         <div id="members" class="panel">
             <div id="userList"></div>
         </div>
 
-        <!-- App Settings -->
+        <!-- Panel: Settings -->
         <div id="settings" class="panel">
-            <div style="background:var(--card); padding:20px; border-radius:20px;">
-                <label>App Logo Link</label>
-                <input type="text" id="appLogo" placeholder="https://image.com/logo.png">
-                <label>App Display Name</label>
+            <div class="admin-card">
+                <label>App Logo URL (Loading & Header)</label>
+                <input type="text" id="appLogo" placeholder="https://your-site.com/logo.png">
+                <label>App Name</label>
                 <input type="text" id="appName" placeholder="Toto Stream">
-                <button onclick="saveSettings()">Update App</button>
+                <button onclick="saveSettings()">Update App Settings</button>
             </div>
         </div>
     </div>
 
     <script>
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyCn72TD-I1yI6-7oCCGlx1Mudh_ZlT7138",
             authDomain: "totostream.firebaseapp.com",
@@ -94,75 +108,83 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+        function toggleMenu() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('overlay');
+            sb.classList.toggle('active');
+            ov.style.display = sb.classList.contains('active') ? 'block' : 'none';
+        }
 
         function showPanel(id) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.getElementById('pTitle').innerText = id.charAt(0).toUpperCase() + id.slice(1);
+            document.getElementById('panelTitle').innerText = id.charAt(0).toUpperCase() + id.slice(1);
             event.currentTarget.classList.add('active');
-            toggleMenu();
+            if(window.innerWidth < 800) toggleMenu();
+            
             if(id === 'dashboard') loadStats();
-            if(id === 'streams') loadStreams();
-            if(id === 'members') loadMembers();
+            if(id === 'addStream') loadRecentStreams();
+            if(id === 'members') loadUsers();
         }
 
         async function loadStats() {
             const uSnap = await db.collection('users').get();
             const sSnap = await db.collection('streams').get();
             document.getElementById('countUsers').innerText = uSnap.size;
-            document.getElementById('countLive').innerText = sSnap.size;
+            document.getElementById('countStreams').innerText = sSnap.size;
         }
 
         async function saveStream() {
+            const t = document.getElementById('sTitle').value;
+            const th = document.getElementById('sThumb').value;
+            const u = document.getElementById('sUrl').value;
+            if(!t || !th || !u) return alert("Fill all fields!");
+            
             await db.collection('streams').add({
-                title: document.getElementById('sTitle').value,
-                thumbnail: document.getElementById('sThumb').value,
-                streamUrl: document.getElementById('sUrl').value,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                title: t, thumbnail: th, streamUrl: u, createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            alert("Stream Published!"); loadStreams();
+            alert("Stream Published!");
+            loadRecentStreams();
         }
 
-        async function loadStreams() {
-            const snap = await db.collection('streams').get();
+        async function loadRecentStreams() {
+            const snap = await db.collection('streams').orderBy('createdAt', 'desc').get();
             const div = document.getElementById('streamList');
             div.innerHTML = "";
             snap.forEach(doc => {
-                div.innerHTML += `<div class="user-row"><span>${doc.data().title}</span><button onclick="delStream('${doc.id}')" style="width:auto; background:none; color:red; margin:0;">Delete</button></div>`;
+                div.innerHTML += `<div class="list-row"><span>${doc.data().title}</span><button onclick="delStream('${doc.id}')" style="width:auto; background:none; color:red; margin:0; padding:0;">Delete</button></div>`;
             });
         }
 
-        async function delStream(id) { if(confirm("Delete?")) { await db.collection('streams').doc(id).delete(); loadStreams(); } }
+        async function delStream(id) { if(confirm("Delete this stream?")) { await db.collection('streams').doc(id).delete(); loadRecentStreams(); } }
 
-        async function loadMembers() {
+        async function loadUsers() {
             const snap = await db.collection('users').orderBy('createdAt', 'desc').get();
             const list = document.getElementById('userList');
             list.innerHTML = "";
             snap.forEach(doc => {
                 const u = doc.data();
-                list.innerHTML += `<div class="user-row">
-                    <div><b>${u.name}</b><br><small>${u.points} pts</small></div>
-                    <button style="width:auto; background:none; color:var(--primary); font-size:12px; margin:0;" onclick="editPoints('${doc.id}', ${u.points})">+/- Points</button>
+                list.innerHTML += `<div class="list-row">
+                    <div><b>${u.name}</b><br><small>${u.points} pts | ${u.referralCount || 0} Ref</small></div>
+                    <button style="width:auto; background:none; color:var(--primary); font-size:12px; margin:0; padding:0;" onclick="editUserPoints('${doc.id}', ${u.points})">Add Points</button>
                 </div>`;
             });
         }
 
-        async function editPoints(id, current) {
-            const amount = prompt("Enter amount to add (use minus to deduct):", "100");
-            if(amount) {
-                await db.collection('users').doc(id).update({ points: firebase.firestore.FieldValue.increment(parseInt(amount)) });
-                loadMembers();
+        async function editUserPoints(id, current) {
+            const amt = prompt("Enter points to add (use '-' to deduct):", "500");
+            if(amt) {
+                await db.collection('users').doc(id).update({ points: firebase.firestore.FieldValue.increment(parseInt(amt)) });
+                loadUsers();
             }
         }
 
         async function saveSettings() {
-            await db.collection('settings').doc('app').set({
-                logo: document.getElementById('appLogo').value,
-                name: document.getElementById('appName').value
-            });
-            alert("App Settings Updated!");
+            const l = document.getElementById('appLogo').value;
+            const n = document.getElementById('appName').value;
+            await db.collection('settings').doc('app').set({ logo: l, name: n });
+            alert("App settings updated successfully!");
         }
 
         loadStats();
